@@ -1,0 +1,86 @@
+
+---
+
+- name: Install and configure web server using Ansible
+  hosts: client1
+  become: yes
+  
+
+  tasks:
+   
+  - name: Installing Remi Repository
+    yum:
+      name: https://rpms.remirepo.net/enterprise/remi-release-7.rpm
+      state: present
+        
+  - name: Installing php
+    yum:
+      name:
+        - php
+        - php-common
+        - php-curl #You can add or remove PHP extensions according to your choice
+        - php-mysqlnd
+        - php-fpm
+      state: latest
+      
+  - name: Install EPEL repository
+    yum:
+      name: epel-release
+      state: present
+
+  - name: Install Nginx
+    yum:
+      name: nginx
+      state: present
+      update_cache: true
+        
+  - name: Download MySQL Community Repo
+    get_url:
+      url: http://repo.mysql.com/mysql-community-release-el7-7.noarch.rpm
+      dest: /tmp
+
+  - name: Install MySQL Community Repo
+    command: /usr/bin/rpm -ivh /tmp/mysql-community-release-el7-7.noarch.rpm
+    ignore_errors: yes
+
+  - name: Install MySQL Server
+    yum: name=mysql-server state=present
+
+
+  - name: Start services
+    service:
+      name: "{{ item }}"
+      state: started
+      enabled: yes
+    loop:
+      - nginx
+      - mysqld
+      - php-fpm
+
+  - name: Create PHP info file
+    template:
+      src: phpinfo.php.j2
+      dest: /var/www/html/info.php
+    notify:
+      - Restart PHP-FPM
+
+  - name: Create NGINX site configuration file
+    template:
+      src: nginx_site.conf.j2
+      dest: /etc/nginx/nginx.conf
+    notify:
+      - Reload NGINX
+
+  handlers:
+    - name: Restart PHP-FPM
+      service:
+        name: php-fpm
+        state: restarted
+
+    - name: Reload NGINX
+      service:
+        name: nginx
+        state: reloaded
+      
+      
+...

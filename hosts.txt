@@ -1,0 +1,10 @@
+[test_servs]
+client1  ansible_host=192.168.1.169 owner=c1 
+
+[tets2_servs]
+client2  ansible_host=192.168.1.185 owner=c2
+client3  ansible_host=192.168.1.154 owner=c3
+
+[all_test_serv:children]
+test_servs
+tets2_servs

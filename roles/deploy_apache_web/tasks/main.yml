@@ -1,0 +1,31 @@
+---
+# tasks file for deploy_apache_web
+- name: Chechk OS type on serv
+  debug: var=ansible_os_family
+
+- block: # For CentOS 
+
+  - name: Install web serv on linux
+    yum: name=httpd state=installed
+
+  - name: Run apache when start system
+    service: name=httpd state=started enabled=yes
+
+  when: ansible_os_family == "RedHat"
+
+- name: Generate page
+  template: src=index.j2 dest={{ destin_folder }}/index.html mode=777
+  notify:
+    - Restart apache CentOS serv
+    - Restart apache Ubuntu serv
+
+- name: Copy html file to serv
+  copy: src={{ item }} dest={{ destin_folder }} mode=777
+ # copy: src={{ item }} dest={{ destin_folder }} mode=777
+ # with_fileglob: "{{ source_folder  }}/*.*"
+  loop:
+    # - "index.html"
+     - "kartinka.png"
+  notify:
+    - Restart apache CentOS serv
+    - Restart apache Ubuntu serv
